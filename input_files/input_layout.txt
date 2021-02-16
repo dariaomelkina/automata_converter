@@ -1,0 +1,10 @@
+size_of_Q size_of_Sigma
+index_of_initial_state
+size_of_F list_of_indices_of_terminal_states
+symbol_1
+size_of_Q_x_size_of_Q_adjacency_matrix
+symbol_2
+size_of_Q_x_size_of_Q_adjacency_matrix
+...
+symbol_size_of_Sigma
+size_of_Q_x_size_of_Q_adjacency_matrix
