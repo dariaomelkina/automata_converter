@@ -143,7 +143,7 @@ if __name__ == '__main__':
             1: {'\\0': {0, 1}, '\\1': {2}},
             2: {'\\e': {0}}}
     init_states = {0, 1, 2}
-    init_elements = {'\\e', '\\0', '\\1'}
+    init_elements = {'\\0', '\\1'}
     initial = {0}
     term = {2}
 
@@ -168,6 +168,7 @@ if __name__ == '__main__':
     for i in new:
         print(f"{i}   {new[i]}")
 
+    # NFA to DFA:
     prev = prepare_for_dfa(prev)
     flag = 1
     while flag:
@@ -194,3 +195,18 @@ if __name__ == '__main__':
     for i in new:
         print(f"{i}   {new[i]}")
 
+    # DFA to cDFA:
+    absorbing_state = "absorbing"
+    flag = 0
+    for state in new:
+        for element in init_elements:
+            if element not in new[state]:
+                flag = 1
+                new[state][element] = {absorbing_state}
+    if flag:
+        new[(absorbing_state,)] = {}
+        for element in init_elements:
+            new[(absorbing_state,)][element] = {absorbing_state}
+
+    for i in new:
+        print(f"{i}   {new[i]}")
