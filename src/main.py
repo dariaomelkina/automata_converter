@@ -165,9 +165,6 @@ if __name__ == '__main__':
                     new[state][transition[0]].add(transition[1])
         prev = new
 
-    for i in new:
-        print(f"{i}   {new[i]}")
-
     # NFA to DFA:
     prev = prepare_for_dfa(prev)
     flag = 1
@@ -186,14 +183,25 @@ if __name__ == '__main__':
                 temp = temp | set(tuple(i) for i in new[state].values())
 
             for key in temp:
-                if set(key) not in list(set(i) for i in new):
+                other_entries = find_entries(key, new)
+                if not other_entries:
                     new[tuple(key)] = {}
                     if set(key) not in list(set(i) for i in prev):
                         flag = 1
-        prev = new
+                else:
+                    for entry in other_entries:
+                        if len(entry) < len(key):
+                            if set(key) not in list(set(i) for i in new):
+                                new[tuple(key)] = {}
+                                if set(key) not in list(set(i) for i in prev):
+                                    flag = 1
+                            new[tuple(key)] = merge(new[tuple(key)], new[entry])
+                            del new[entry]
+                        elif len(entry) > len(key):
+                            new[entry] = merge(new[entry], new[tuple(key)])
+                            del new[tuple(key)]
 
-    for i in new:
-        print(f"{i}   {new[i]}")
+        prev = new
 
     # DFA to cDFA:
     absorbing_state = "absorbing"
