@@ -77,50 +77,83 @@ def epsilon_nfa_to_nfa(fa):
     return fa
 
 
+def merge(dict1, dict2):
+    for transition in dict2.items():
+        if transition[0] in dict1:
+            dict1[transition[0]].add(transition[1])
+        else:
+            dict1[transition[0]] = transition[1]
+    return dict1
+
+
 if __name__ == '__main__':
-    # TODO: add checking of the argument provided
-    given_file_path = sys.argv[1]
+    # # TODO: add checking of the argument provided
+    # given_file_path = sys.argv[1]
+    #
+    # # Parsing file to get automata represented as a list:
+    # # [index of initial state, list of indices of terminal states,
+    # #  transitions: element:[(pair of states), ....]
+    # #  state transitions: {state:[(element1,state1), (element1, state2), ...]} ]
+    # automata = parse(given_file_path)
+    #
+    # # If we have epsilon-NFA, convert it to NFA:
+    # automata = epsilon_nfa_to_nfa(automata)
+    #
+    # # Convert automata to DFA:
+    # # Initially new Q is empty, I suppose
+    # new_element_transitions = dict()
+    # new_state_transitions = dict()
+    # q = []
+    # new_delta = dict()
+    #
+    # # костильний метод для отримання переходів,
+    # # приберу його коли буду нормально парсити, а не як зараз:/
+    # delta = get_normal_delta_representation(automata[3])
+    # # for i in delta.items():
+    # #     print(i)
+    #
+    # q.append((automata[0],))
+    #
+    # for state in q:
+    #     new_delta[state] = dict()
+    #
+    #     for element in state:
+    #         for transition in delta[element]:
+    #             transition_state_set = delta[element][transition]
+    #             if transition not in new_delta[state]:
+    #                 new_delta[state][transition] = transition_state_set
+    #             else:
+    #                 new_delta[state][transition].union(transition_state_set)
+    #             new_state = tuple(transition_state_set)
+    #             # for other_state in q:
+    #             #     if element in state:
+    #             #         new_delta[state][transition].union(new_delta[other_state][element])
+    #             if new_state not in q:
+    #                 q.append(new_state)
+    # print(f"     {'  '.join(list(str(i) for i in range(len(automata[2]))))}")
+    # for i in new_delta:
+    #     print(f"{i}   {'  '.join(list(str(i) for i in range(len(new_delta))))}")
+    prev = {0: {'\\e': {1}},
+            1: {'\\0': {0, 1}, '\\1': {2}},
+            2: {'\\e': {0}}}
+    init_states = {0, 1, 2}
+    init_elements = {'\\e', '\\0', '\\1'}
 
-    # Parsing file to get automata represented as a list:
-    # [index of initial state, list of indices of terminal states,
-    #  transitions: element:[(pair of states), ....]
-    #  state transitions: {state:[(element1,state1), (element1, state2), ...]} ]
-    automata = parse(given_file_path)
-
-    # If we have epsilon-NFA, convert it to NFA:
-    automata = epsilon_nfa_to_nfa(automata)
-
-    # Convert automata to DFA:
-    # Initially new Q is empty, I suppose
-    new_element_transitions = dict()
-    new_state_transitions = dict()
-    q = []
-    new_delta = dict()
-
-    # костильний метод для отримання переходів,
-    # приберу його коли буду нормально парсити, а не як зараз:/
-    delta = get_normal_delta_representation(automata[3])
-    # for i in delta.items():
-    #     print(i)
-
-    q.append((automata[0],))
-
-    for state in q:
-        new_delta[state] = dict()
-
-        for element in state:
-            for transition in delta[element]:
-                transition_state_set = delta[element][transition]
-                if transition not in new_delta[state]:
-                    new_delta[state][transition] = transition_state_set
+    flag = 1
+    while flag:
+        new = {}
+        flag = 0
+        for state in prev:
+            new[state] = {}
+            for transition in prev[state].items():
+                if transition[0] == '\\e':
+                    for new_state in transition[1]:
+                        new[state] = merge(new[state], prev[new_state])
+                    flag = 1
+                elif transition[0] not in new[state]:
+                    new[state][transition[0]] = transition[1]
                 else:
-                    new_delta[state][transition].union(transition_state_set)
-                new_state = tuple(transition_state_set)
-                # for other_state in q:
-                #     if element in state:
-                #         new_delta[state][transition].union(new_delta[other_state][element])
-                if new_state not in q:
-                    q.append(new_state)
-    print(f"     {'  '.join(list(str(i) for i in range(len(automata[2]))))}")
-    for i in new_delta:
-        print(f"{i}   {'  '.join(list(str(i) for i in range(len(new_delta))))}")
+                    new[state][transition[0]].add(transition[1])
+        prev = new
+
+    print(new)
