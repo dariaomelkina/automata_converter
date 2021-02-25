@@ -47,43 +47,49 @@ def get_normal_delta_representation(transitions):
     return adequate_q
 
 
-def epsilon_nfa_to_nfa(fa):
-    # TODO: add list of initial states
-    # First, we will change index of initial state to a list of indexes, so algorithm can work
-    # fa[0] = [fa[0]]
-
-    if '\\e' in fa[2]:
-        for transition in fa[2]['\\e']:
-            start_state = transition[0]
-            end_state = transition[1]
-
-            # if start_state in fa[0]:
-            #     fa[0].append(end_state)
-
-            if end_state in fa[1]:
-                fa[1].append(start_state)
-
-            for end_transition in fa[3][end_state]:
-                if '\\e' not in end_transition:
-                    fa[3][start_state].append(end_transition)
-                fa[2][end_transition[0]].append((start_state, end_transition[1]))
-
-        del fa[2]['\\e']
-
-    for element in fa[3]:
-        for transition in fa[3][element]:
-            if '\\e' in transition:
-                fa[3][element].remove(transition)
-    return fa
+def epsilon_nfa_to_nfa(prev):
+    # TODO: add term states
+    flag = 1
+    while flag:
+        new = {}
+        flag = 0
+        for state in prev:
+            new[state] = {}
+            for transition in prev[state].items():
+                if transition[0] == '\\e':
+                    for new_state in transition[1]:
+                        new[state] = merge(new[state], prev[new_state])
+                    flag = 1
+                elif transition[0] not in new[state]:
+                    new[state][transition[0]] = transition[1]
+                else:
+                    new[state][transition[0]].add(transition[1])
+        prev = new
+    return new
 
 
 def merge(dict1, dict2):
     for transition in dict2.items():
         if transition[0] in dict1:
-            dict1[transition[0]].add(transition[1])
+            dict1[transition[0]] | set(transition[1])
         else:
             dict1[transition[0]] = transition[1]
     return dict1
+
+
+def find_entries(state, dct):
+    entries = set()
+    for key in dct:
+        if set(state) & set(key):
+            entries.add(key)
+    return entries
+
+
+def prepare_for_dfa(dct):
+    new_dct = {}
+    for i in dct.items():
+        new_dct[(i[0],)] = i[1]
+    return new_dct
 
 
 if __name__ == '__main__':
@@ -138,7 +144,10 @@ if __name__ == '__main__':
             2: {'\\e': {0}}}
     init_states = {0, 1, 2}
     init_elements = {'\\e', '\\0', '\\1'}
+    initial = {0}
+    term = {2}
 
+    # Epsilon-NFA to NFA:
     flag = 1
     while flag:
         new = {}
@@ -156,4 +165,32 @@ if __name__ == '__main__':
                     new[state][transition[0]].add(transition[1])
         prev = new
 
-    print(new)
+    for i in new:
+        print(f"{i}   {new[i]}")
+
+    prev = prepare_for_dfa(prev)
+    flag = 1
+    while flag:
+        new = {}
+        flag = 0
+        for state in prev:
+            temp = set()  # Holds new possible states
+            entries = find_entries(state, new)
+            if entries:
+                for entry in entries:
+                    new[entry] = merge(new[entry], prev[state])
+                    temp = temp | set(tuple(i) for i in new[entry].values())
+            else:
+                new[state] = prev[state]
+                temp = temp | set(tuple(i) for i in new[state].values())
+
+            for key in temp:
+                if set(key) not in list(set(i) for i in new):
+                    new[tuple(key)] = {}
+                    if set(key) not in list(set(i) for i in prev):
+                        flag = 1
+        prev = new
+
+    for i in new:
+        print(f"{i}   {new[i]}")
+
